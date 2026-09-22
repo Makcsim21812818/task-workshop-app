@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="toolbar">
+    <h2>Задачи</h2>
+    <a href="{{ url_for('add') }}" class="btn">+ Добавить задачу</a>
+</div>
+
+{% if tasks %}
+<table>
+    <tr>
+        <th>Задача</th>
+        <th>Кому</th>
+        <th>Срок</th>
+        <th>Статус</th>
+        <th>Действия</th>
+    </tr>
+    {% for task in tasks %}
+    <tr>
+        <td>{{ task.title }}</td>
+        <td>{{ task.assignee }}</td>
+        <td>{{ task.deadline or '—' }}</td>
+        <td>
+            {% if task.status == 'новая' %}🟠 {{ task.status }}
+            {% elif task.status == 'в работе' %}🔵 {{ task.status }}
+            {% else %}🟢 {{ task.status }}
+            {% endif %}
+        </td>
+        <td class="actions">
+            <a href="{{ url_for('change_status', id=task.id, status='в работе') }}">В работу</a>
+            <a href="{{ url_for('change_status', id=task.id, status='готово') }}">Готово</a>
+            <a href="{{ url_for('delete', id=task.id) }}"
+               onclick="return confirm('Удалить задачу?')">Удалить</a>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+{% else %}
+<p class="empty">Пока нет задач. Добавь первую!</p>
+{% endif %}
+
+{% endblock %}

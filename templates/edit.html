@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<h2>Редактирование задачи</h2>
+<form method="post">
+    <label>Что нужно сделать:</label>
+    <input type="text" name="title" value="{{ task.title }}" required autofocus>
+
+    <label>Кому:</label>
+    <input type="text" name="assignee" value="{{ task.assignee }}" required>
+
+    <label>Срок:</label>
+    <input type="date" name="deadline" value="{{ task.deadline or '' }}">
+
+    <label>Приоритет:</label>
+<select name="priority">
+    <option value="низкий" {% if task.priority == 'низкий' %}selected{% endif %}>🟢 Низкий</option>
+    <option value="обычный" {% if task.priority == 'обычный' %}selected{% endif %}>🟡 Обычный</option>
+    <option value="высокий" {% if task.priority == 'высокий' %}selected{% endif %}>🔴 Высокий</option>
+</select>
+
+    <button type="submit">Сохранить</button>
+    <a href="{{ url_for('index') }}">Отмена</a>
+</form>
+
+{% endblock %}

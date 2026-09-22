@@ -54,6 +54,7 @@ tr:hover { background: #fafafa; }
     font-size: 14px;
 }
 .actions a:last-child { color: #e74c3c; }
+.actions a:first-child { color: #e67e22; }
 
 form {
     background: white;
@@ -85,3 +86,13 @@ form button {
 form button:hover { background: #219a52; }
 form a { margin-left: 15px; color: #888; text-decoration: none; }
 .empty { color: #888; font-style: italic; }
+
+form select {
+    width: 100%;
+    padding: 10px;
+    margin-top: 5px;
+    font-size: 15px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    background: white;
+}

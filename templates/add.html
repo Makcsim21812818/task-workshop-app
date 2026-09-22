@@ -12,6 +12,13 @@
     <label>Срок:</label>
     <input type="date" name="deadline">
 
+    <label>Приоритет:</label>
+<select name="priority">
+    <option value="низкий">🟢 Низкий</option>
+    <option value="обычный" selected>🟡 Обычный</option>
+    <option value="высокий">🔴 Высокий</option>
+</select>
+
     <button type="submit">Сохранить</button>
     <a href="{{ url_for('index') }}">Отмена</a>
 </form>

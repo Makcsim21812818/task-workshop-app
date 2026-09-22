@@ -15,6 +15,7 @@ class Task(db.Model):
     assignee = db.Column(db.String(50), nullable=False)   # кому
     deadline = db.Column(db.String(20))                   # срок
     status = db.Column(db.String(20), default='новая')    # новая / в работе / готово
+    priority = db.Column(db.String(20), default='обычный')   # ← новая строка
     created = db.Column(db.DateTime, default=datetime.utcnow)  # когда создали
 
 
@@ -22,6 +23,18 @@ class Task(db.Model):
 with app.app_context():
     db.create_all()
 
+@app.route('/edit/<int:id>', methods=['GET', 'POST'])
+def edit(id):
+    """Редактирование задачи."""
+    task = Task.query.get_or_404(id)
+    if request.method == 'POST':
+        task.title = request.form['title']
+        task.assignee = request.form['assignee']
+        task.deadline = request.form['deadline']
+        task.priority = request.form.get('priority', 'обычный')
+        db.session.commit()
+        return redirect(url_for('index'))
+    return render_template('edit.html', task=task)
 
 @app.route('/')
 def index():
@@ -37,13 +50,13 @@ def add():
         task = Task(
             title=request.form['title'],
             assignee=request.form['assignee'],
-            deadline=request.form['deadline']
+            deadline=request.form['deadline'],
+            priority=request.form.get('priority', 'обычный')
         )
         db.session.add(task)
         db.session.commit()
         return redirect(url_for('index'))
     return render_template('add.html')
-
 
 @app.route('/status/<int:id>/<status>')
 def change_status(id, status):

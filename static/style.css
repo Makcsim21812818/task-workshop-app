@@ -96,3 +96,9 @@ form select {
     border: 1px solid #ccc;
     background: white;
 }
+
+.sub {
+    color: #999;
+    font-size: 13px;
+    margin-left: 5px;
+}

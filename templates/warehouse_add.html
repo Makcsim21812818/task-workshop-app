@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<h2>Новая позиция на складе</h2>
+<form method="post">
+    <label>Название:</label>
+    <input type="text" name="name" required autofocus
+           placeholder="Например: PLA или Ваза-спираль">
+
+    <label>Категория:</label>
+    <select name="category">
+        <option value="продукция">📦 Продукция (штуки)</option>
+        <option value="филамент">🧵 Филамент (граммы)</option>
+    </select>
+
+    <label>Цвет:</label>
+    <select name="color">
+        <option value="белый">⚪ Белый</option>
+        <option value="чёрный">⚫ Чёрный</option>
+    </select>
+
+    <label>Начальное количество:</label>
+    <input type="number" name="quantity" value="0" min="0">
+
+    <button type="submit">Сохранить</button>
+    <a href="{{ url_for('warehouse') }}">Отмена</a>
+</form>
+
+{% endblock %}

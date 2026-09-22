@@ -18,6 +18,13 @@ class Task(db.Model):
     priority = db.Column(db.String(20), default='обычный')   # ← новая строка
     created = db.Column(db.DateTime, default=datetime.utcnow)  # когда создали
 
+class Material(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)      # название
+    category = db.Column(db.String(30), nullable=False)   # продукция / филамент
+    color = db.Column(db.String(20), default='белый')     # белый / чёрный
+    quantity = db.Column(db.Integer, default=0)           # граммы или штуки
+    created = db.Column(db.DateTime, default=datetime.utcnow)
 
 # Создать таблицы при первом запуске
 with app.app_context():
@@ -75,6 +82,62 @@ def delete(id):
     db.session.commit()
     return redirect(url_for('index'))
 
+@app.route('/warehouse')
+def warehouse():
+    """Список всех позиций на складе."""
+    materials = Material.query.order_by(Material.category, Material.name).all()
+    return render_template('warehouse.html', materials=materials)
+
+
+@app.route('/warehouse/add', methods=['GET', 'POST'])
+def warehouse_add():
+    """Добавление новой позиции."""
+    if request.method == 'POST':
+        material = Material(
+            name=request.form['name'],
+            category=request.form['category'],
+            color=request.form.get('color', 'белый'),
+            quantity=int(request.form.get('quantity', 0) or 0)
+        )
+        db.session.add(material)
+        db.session.commit()
+        return redirect(url_for('warehouse'))
+    return render_template('warehouse_add.html')
+
+
+@app.route('/warehouse/edit/<int:id>', methods=['GET', 'POST'])
+def warehouse_edit(id):
+    """Редактирование позиции."""
+    material = Material.query.get_or_404(id)
+    if request.method == 'POST':
+        material.name = request.form['name']
+        material.category = request.form['category']
+        material.color = request.form.get('color', 'белый')
+        material.quantity = int(request.form.get('quantity', 0) or 0)
+        db.session.commit()
+        return redirect(url_for('warehouse'))
+    return render_template('warehouse_edit.html', material=material)
+
+
+@app.route('/warehouse/change/<int:id>/<delta>')
+def warehouse_change(id, delta):
+    """Быстрое изменение остатка на delta (может быть отрицательным)."""
+    material = Material.query.get_or_404(id)
+    try:
+        delta_int = int(delta)   # превращаем текст в число
+    except ValueError:
+        delta_int = 0            # если пришло что-то нечисловое — считаем нулём
+    material.quantity = max(0, material.quantity + delta_int)
+    db.session.commit()
+    return redirect(url_for('warehouse'))
+
+@app.route('/warehouse/delete/<int:id>')
+def warehouse_delete(id):
+    """Удаление позиции."""
+    material = Material.query.get_or_404(id)
+    db.session.delete(material)
+    db.session.commit()
+    return redirect(url_for('warehouse'))
 
 if __name__ == '__main__':
     app.run(debug=True)

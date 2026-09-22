@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<h2>Редактирование позиции</h2>
+<form method="post">
+    <label>Название:</label>
+    <input type="text" name="name" value="{{ material.name }}" required autofocus>
+
+    <label>Категория:</label>
+    <select name="category">
+        <option value="продукция" {% if material.category == 'продукция' %}selected{% endif %}>📦 Продукция (штуки)</option>
+        <option value="филамент" {% if material.category == 'филамент' %}selected{% endif %}>🧵 Филамент (граммы)</option>
+    </select>
+
+    <label>Цвет:</label>
+    <select name="color">
+        <option value="белый" {% if material.color == 'белый' %}selected{% endif %}>⚪ Белый</option>
+        <option value="чёрный" {% if material.color == 'чёрный' %}selected{% endif %}>⚫ Чёрный</option>
+    </select>
+
+    <label>Количество:</label>
+    <input type="number" name="quantity" value="{{ material.quantity }}" min="0">
+
+    <button type="submit">Сохранить</button>
+    <a href="{{ url_for('warehouse') }}">Отмена</a>
+</form>
+
+{% endblock %}

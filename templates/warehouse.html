@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="toolbar">
+    <h2>Склад</h2>
+    <a href="{{ url_for('warehouse_add') }}" class="btn">+ Добавить позицию</a>
+</div>
+
+{% if materials %}
+<table>
+    <tr>
+        <th>Название</th>
+        <th>Категория</th>
+        <th>Цвет</th>
+        <th>Остаток</th>
+        <th>+ / −</th>
+        <th>Действия</th>
+    </tr>
+    {% for m in materials %}
+    <tr>
+        <td>{{ m.name }}</td>
+        <td>
+            {% if m.category == 'филамент' %}🧵 филамент
+            {% else %}📦 продукция
+            {% endif %}
+        </td>
+        <td>
+            {% if m.color == 'белый' %}⚪ белый
+            {% elif m.color == 'чёрный' %}⚫ чёрный
+            {% else %}{{ m.color }}
+            {% endif %}
+        </td>
+        <td>
+            {% if m.category == 'филамент' %}
+                <b>{{ m.quantity }} г</b>
+                <span class="sub">({{ '%.1f' % (m.quantity / 1000) }} катушек)</span>
+            {% else %}
+                <b>{{ m.quantity }} шт</b>
+            {% endif %}
+        </td>
+        <td class="actions">
+            {% if m.category == 'филамент' %}
+                <a href="{{ url_for('warehouse_change', id=m.id, delta=100) }}">+100 г</a>
+                <a href="{{ url_for('warehouse_change', id=m.id, delta=-100) }}">−100 г</a>
+            {% else %}
+                <a href="{{ url_for('warehouse_change', id=m.id, delta=1) }}">+1</a>
+                <a href="{{ url_for('warehouse_change', id=m.id, delta=-1) }}">−1</a>
+            {% endif %}
+        </td>
+        <td class="actions">
+            <a href="{{ url_for('warehouse_edit', id=m.id) }}">Редактировать</a>
+            <a href="{{ url_for('warehouse_delete', id=m.id) }}"
+               onclick="return confirm('Удалить позицию?')">Удалить</a>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+{% else %}
+<p class="empty">Склад пуст. Добавь первую позицию!</p>
+{% endif %}
+
+{% endblock %}

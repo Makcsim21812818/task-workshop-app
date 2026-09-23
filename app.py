@@ -1,10 +1,11 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///workshop.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SECRET_KEY'] = 'workshop-secret-key-change-me'
 db = SQLAlchemy(app)
 
 
@@ -16,14 +17,26 @@ class Task(db.Model):
     deadline = db.Column(db.String(20))                   # срок
     status = db.Column(db.String(20), default='новая')    # новая / в работе / готово
     priority = db.Column(db.String(20), default='обычный')   # ← новая строка
+    weight = db.Column(db.Integer, default=0)   # ← вес 1 шт в граммах (для продукции)
     created = db.Column(db.DateTime, default=datetime.utcnow)  # когда создали
 
 class Material(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False)      # название
-    category = db.Column(db.String(30), nullable=False)   # продукция / филамент
-    color = db.Column(db.String(20), default='белый')     # белый / чёрный
-    quantity = db.Column(db.Integer, default=0)           # граммы или штуки
+    name = db.Column(db.String(100), nullable=False)
+    category = db.Column(db.String(30), nullable=False)
+    color = db.Column(db.String(20), default='белый')
+    quantity = db.Column(db.Integer, default=0)
+    weight = db.Column(db.Integer, default=0)     # ← ЭТА строка должна быть здесь
+    created = db.Column(db.DateTime, default=datetime.utcnow)
+
+class Order(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    product_name = db.Column(db.String(100), nullable=False)   # что печатать
+    color = db.Column(db.String(20), default='белый')          # цвет
+    quantity = db.Column(db.Integer, nullable=False, default=1) # сколько штук
+    filament_grams = db.Column(db.Integer, nullable=False, default=0)  # всего грамм филамента
+    deadline = db.Column(db.String(20))                        # срок
+    status = db.Column(db.String(20), default='в очереди')     # в очереди / печатается / готово
     created = db.Column(db.DateTime, default=datetime.utcnow)
 
 # Создать таблицы при первом запуске
@@ -94,11 +107,12 @@ def warehouse_add():
     """Добавление новой позиции."""
     if request.method == 'POST':
         material = Material(
-            name=request.form['name'],
-            category=request.form['category'],
-            color=request.form.get('color', 'белый'),
-            quantity=int(request.form.get('quantity', 0) or 0)
-        )
+    name=request.form['name'],
+    category=request.form['category'],
+    color=request.form.get('color', 'белый'),
+    quantity=int(request.form.get('quantity', 0) or 0),
+    weight=int(request.form.get('weight', 0) or 0)
+)
         db.session.add(material)
         db.session.commit()
         return redirect(url_for('warehouse'))
@@ -114,6 +128,7 @@ def warehouse_edit(id):
         material.category = request.form['category']
         material.color = request.form.get('color', 'белый')
         material.quantity = int(request.form.get('quantity', 0) or 0)
+        material.weight = int(request.form.get('weight', 0) or 0)
         db.session.commit()
         return redirect(url_for('warehouse'))
     return render_template('warehouse_edit.html', material=material)
@@ -138,6 +153,101 @@ def warehouse_delete(id):
     db.session.delete(material)
     db.session.commit()
     return redirect(url_for('warehouse'))
+
+@app.route('/production')
+def production():
+    """Список заказов на печать."""
+    orders = Order.query.all()
+    priority = {'печатается': 0, 'в очереди': 1, 'готово': 2}
+    orders.sort(key=lambda o: (priority.get(o.status, 9), o.created))
+    return render_template('production.html', orders=orders)
+
+
+@app.route('/production/add', methods=['GET', 'POST'])
+def production_add():
+    """Новый заказ."""
+    if request.method == 'POST':
+        order = Order(
+            product_name=request.form['product_name'],
+            color=request.form.get('color', 'белый'),
+            quantity=int(request.form.get('quantity', 1) or 1),
+            filament_grams=int(request.form.get('filament_grams', 0) or 0),
+            deadline=request.form['deadline']
+        )
+        db.session.add(order)
+        db.session.commit()
+        return redirect(url_for('production'))
+    return render_template('production_add.html')
+
+
+@app.route('/production/edit/<int:id>', methods=['GET', 'POST'])
+def production_edit(id):
+    """Редактирование заказа."""
+    order = Order.query.get_or_404(id)
+    if request.method == 'POST':
+        order.product_name = request.form['product_name']
+        order.color = request.form.get('color', 'белый')
+        order.quantity = int(request.form.get('quantity', 1) or 1)
+        order.filament_grams = int(request.form.get('filament_grams', 0) or 0)
+        order.deadline = request.form['deadline']
+        db.session.commit()
+        return redirect(url_for('production'))
+    return render_template('production_edit.html', order=order)
+
+
+@app.route('/production/status/<int:id>/<status>')
+def production_status(id, status):
+    """Смена статуса. При 'готово' списываем филамент и пополняем склад."""
+    order = Order.query.get_or_404(id)
+
+    if status == 'готово':
+        # 1. Ищем филамент нужного цвета
+        filament = Material.query.filter_by(category='филамент', color=order.color).first()
+        if not filament:
+            flash(f'❌ На складе нет филамента цвета «{order.color}». Добавь филамент сначала.', 'error')
+            return redirect(url_for('production'))
+
+        # 2. Проверяем, хватает ли грамм
+        if filament.quantity < order.filament_grams:
+            flash(
+                f'❌ Недостаточно {order.color}ого филамента: '
+                f'нужно {order.filament_grams} г, на складе {filament.quantity} г.',
+                'error'
+            )
+            return redirect(url_for('production'))
+
+        # 3. Списываем филамент
+        filament.quantity -= order.filament_grams
+
+        # 4. Пополняем склад продукцией (или создаём новую позицию)
+        product = Material.query.filter_by(
+            category='продукция',
+            name=order.product_name,
+            color=order.color
+        ).first()
+        if product:
+            product.quantity += order.quantity
+        else:
+            product = Material(
+                name=order.product_name,
+                category='продукция',
+                color=order.color,
+                quantity=order.quantity
+            )
+            db.session.add(product)
+
+    order.status = status
+    db.session.commit()
+    return redirect(url_for('production'))
+
+
+@app.route('/production/delete/<int:id>')
+def production_delete(id):
+    """Удаление заказа."""
+    order = Order.query.get_or_404(id)
+    db.session.delete(order)
+    db.session.commit()
+    return redirect(url_for('production'))
 
 if __name__ == '__main__':
     app.run(debug=True)

@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="toolbar">
+    <h2>Производство</h2>
+    <a href="{{ url_for('production_add') }}" class="btn">+ Новый заказ</a>
+</div>
+
+{% if orders %}
+<table>
+    <tr>
+        <th>Что печатать</th>
+        <th>Цвет</th>
+        <th>Кол-во</th>
+        <th>Филамент</th>
+        <th>Дедлайн</th>
+        <th>Статус</th>
+        <th>Действия</th>
+    </tr>
+    {% for o in orders %}
+    <tr>
+        <td>{{ o.product_name }}</td>
+        <td>{% if o.color == 'белый' %}⚪{% else %}⚫{% endif %} {{ o.color }}</td>
+        <td>{{ o.quantity }} шт</td>
+        <td>{{ o.filament_grams }} г</td>
+        <td>{{ o.deadline or '—' }}</td>
+        <td>
+            {% if o.status == 'в очереди' %}🟠 {{ o.status }}
+            {% elif o.status == 'печатается' %}🔵 {{ o.status }}
+            {% else %}🟢 {{ o.status }}
+            {% endif %}
+        </td>
+        <td class="actions">
+            {% if o.status == 'в очереди' %}
+                <a href="{{ url_for('production_status', id=o.id, status='печатается') }}">Начать печать</a>
+            {% elif o.status == 'печатается' %}
+                <a href="{{ url_for('production_status', id=o.id, status='готово') }}">Завершить</a>
+            {% endif %}
+            <a href="{{ url_for('production_edit', id=o.id) }}">Редактировать</a>
+            <a href="{{ url_for('production_delete', id=o.id) }}"
+               onclick="return confirm('Удалить заказ?')">Удалить</a>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+{% else %}
+<p class="empty">Заказов нет. Добавь первый!</p>
+{% endif %}
+
+{% endblock %}

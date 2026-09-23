@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<h2>Новый заказ на печать</h2>
+<form method="post">
+    <label>Что печатать (название):</label>
+    <input type="text" name="product_name" required autofocus
+           placeholder="Например: Ваза-спираль">
+
+    <label>Цвет:</label>
+    <select name="color">
+        <option value="белый">⚪ Белый</option>
+        <option value="чёрный">⚫ Чёрный</option>
+    </select>
+
+    <label>Количество, шт:</label>
+    <input type="number" name="quantity" value="1" min="1" required>
+
+    <label>Всего филамента, г :</label>
+    <input type="number" name="filament_grams" value="0" min="0" required>
+
+    <label>Дедлайн:</label>
+    <input type="date" name="deadline">
+
+    <button type="submit">Сохранить</button>
+    <a href="{{ url_for('production') }}">Отмена</a>
+</form>
+
+{% endblock %}

@@ -9,12 +9,21 @@
     <header>
         <h1>3D-печать</h1>
         <nav>
-            <a href="{{ url_for('index') }}">Задачи</a>
-            <a href="{{ url_for('warehouse') }}">Склад</a>
-        </nav>
+    <a href="{{ url_for('index') }}">Задачи</a>
+    <a href="{{ url_for('warehouse') }}">Склад</a>
+    <a href="{{ url_for('production') }}">Производство</a>
+</nav>
     </header>
-    <main>
-        {% block content %}{% endblock %}
-    </main>
+            <main>
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            {% for msg in messages %}
+                <div class="flash">{{ msg }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+</main>
+
 </body>
 </html>

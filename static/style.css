@@ -102,3 +102,13 @@ form select {
     font-size: 13px;
     margin-left: 5px;
 }
+
+.flash {
+    background: #ffe0e0;
+    border-left: 4px solid #e74c3c;
+    padding: 12px 18px;
+    margin-bottom: 20px;
+    border-radius: 4px;
+    color: #7a1f1f;
+    font-weight: 500;
+}

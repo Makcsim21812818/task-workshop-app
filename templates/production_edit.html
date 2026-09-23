@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<h2>Редактирование заказа</h2>
+<form method="post">
+    <label>Что печатать:</label>
+    <input type="text" name="product_name" value="{{ order.product_name }}" required autofocus>
+
+    <label>Цвет:</label>
+    <select name="color">
+        <option value="белый" {% if order.color == 'белый' %}selected{% endif %}>⚪ Белый</option>
+        <option value="чёрный" {% if order.color == 'чёрный' %}selected{% endif %}>⚫ Чёрный</option>
+    </select>
+
+    <label>Количество, шт:</label>
+    <input type="number" name="quantity" value="{{ order.quantity }}" min="1" required>
+
+    <label>Всего филамента, г:</label>
+    <input type="number" name="filament_grams" value="{{ order.filament_grams }}" min="0" required>
+
+    <label>Дедлайн:</label>
+    <input type="date" name="deadline" value="{{ order.deadline or '' }}">
+
+    <button type="submit">Сохранить</button>
+    <a href="{{ url_for('production') }}">Отмена</a>
+</form>
+
+{% endblock %}

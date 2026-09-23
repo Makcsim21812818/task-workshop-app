@@ -21,6 +21,9 @@
     <label>Количество:</label>
     <input type="number" name="quantity" value="{{ material.quantity }}" min="0">
 
+    <label>Вес одной штуки, г (только для продукции):</label>
+<input type="number" name="weight" value="{{ material.weight or 0 }}" min="0">
+
     <button type="submit">Сохранить</button>
     <a href="{{ url_for('warehouse') }}">Отмена</a>
 </form>

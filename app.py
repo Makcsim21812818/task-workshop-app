@@ -39,6 +39,15 @@ class Order(db.Model):
     status = db.Column(db.String(20), default='в очереди')     # в очереди / печатается / готово
     created = db.Column(db.DateTime, default=datetime.utcnow)
 
+class Transaction(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    type = db.Column(db.String(20), nullable=False)      # доход / расход
+    category = db.Column(db.String(50), nullable=False)  # Ozon / Пластик / Электричество и т.д.
+    amount = db.Column(db.Float, nullable=False)         # сумма в рублях
+    date = db.Column(db.String(20))                      # дата операции
+    description = db.Column(db.String(200))              # короткое описание (опционально)
+    created = db.Column(db.DateTime, default=datetime.utcnow)
+
 # Создать таблицы при первом запуске
 with app.app_context():
     db.create_all()
@@ -248,6 +257,57 @@ def production_delete(id):
     db.session.delete(order)
     db.session.commit()
     return redirect(url_for('production'))
+
+@app.route('/finance')
+def finance():
+    """Страница финансов: список операций и итоги."""
+    transactions = Transaction.query.order_by(Transaction.created.desc()).all()
+
+    # Итоги по деньгам
+    total_income = sum(t.amount for t in transactions if t.type == 'доход')
+    total_expense = sum(t.amount for t in transactions if t.type == 'расход')
+    balance = total_income - total_expense
+
+    # Статистика филамента — берём из готовых заказов
+    done_orders = Order.query.filter_by(status='готово').all()
+    filament_grams = sum(o.filament_grams for o in done_orders)
+    filament_cost = filament_grams * 0.841  # себестоимость грамма
+
+    return render_template(
+        'finance.html',
+        transactions=transactions,
+        total_income=total_income,
+        total_expense=total_expense,
+        balance=balance,
+        filament_grams=filament_grams,
+        filament_cost=filament_cost
+    )
+
+
+@app.route('/finance/add', methods=['GET', 'POST'])
+def finance_add():
+    """Новая операция."""
+    if request.method == 'POST':
+        transaction = Transaction(
+            type=request.form['type'],
+            category=request.form['category'],
+            amount=float(request.form.get('amount', 0) or 0),
+            date=request.form['date'],
+            description=request.form.get('description', '')
+        )
+        db.session.add(transaction)
+        db.session.commit()
+        return redirect(url_for('finance'))
+    return render_template('finance_add.html')
+
+
+@app.route('/finance/delete/<int:id>')
+def finance_delete(id):
+    """Удаление операции."""
+    transaction = Transaction.query.get_or_404(id)
+    db.session.delete(transaction)
+    db.session.commit()
+    return redirect(url_for('finance'))
 
 if __name__ == '__main__':
     app.run(debug=True)

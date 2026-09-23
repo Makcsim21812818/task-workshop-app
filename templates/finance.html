@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<h2>Финансы</h2>
+
+<div class="cards">
+    <div class="card card-income">
+        <div class="card-label">Доходы</div>
+        <div class="card-value">{{ '%.2f' % total_income }} ₽</div>
+    </div>
+    <div class="card card-expense">
+        <div class="card-label">Расходы</div>
+        <div class="card-value">{{ '%.2f' % total_expense }} ₽</div>
+    </div>
+    <div class="card card-balance {% if balance < 0 %}negative{% endif %}">
+        <div class="card-label">Баланс</div>
+        <div class="card-value">{{ '%.2f' % balance }} ₽</div>
+    </div>
+</div>
+
+<div class="cards">
+    <div class="card card-filament">
+        <div class="card-label">Израсходовано филамента</div>
+        <div class="card-value">{{ filament_grams }} г</div>
+        <div class="card-sub">себестоимость: {{ '%.2f' % filament_cost }} ₽</div>
+    </div>
+</div>
+
+<div class="toolbar">
+    <h3>Операции</h3>
+    <a href="{{ url_for('finance_add') }}" class="btn">+ Добавить операцию</a>
+</div>
+
+{% if transactions %}
+<table>
+    <tr>
+        <th>Дата</th>
+        <th>Тип</th>
+        <th>Категория</th>
+        <th>Сумма</th>
+        <th>Описание</th>
+        <th>Действия</th>
+    </tr>
+    {% for t in transactions %}
+    <tr>
+        <td>{{ t.date or '—' }}</td>
+        <td>
+            {% if t.type == 'доход' %}🟢 доход
+            {% else %}🔴 расход
+            {% endif %}
+        </td>
+        <td>{{ t.category }}</td>
+        <td>
+            {% if t.type == 'доход' %}+{% else %}−{% endif %}{{ '%.2f' % t.amount }} ₽
+        </td>
+        <td>{{ t.description or '—' }}</td>
+        <td class="actions">
+            <a href="{{ url_for('finance_delete', id=t.id) }}"
+               onclick="return confirm('Удалить операцию?')">Удалить</a>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+{% else %}
+<p class="empty">Операций нет. Добавь первую!</p>
+{% endif %}
+
+{% endblock %}

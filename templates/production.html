@@ -9,20 +9,22 @@
 {% if orders %}
 <table>
     <tr>
-        <th>Что печатать</th>
-        <th>Цвет</th>
-        <th>Кол-во</th>
-        <th>Филамент</th>
-        <th>Дедлайн</th>
-        <th>Статус</th>
-        <th>Действия</th>
-    </tr>
+    <th>Что печатать</th>
+    <th>Филамент</th>
+    <th>Цвет</th>
+    <th>Кол-во</th>
+    <th>Грамм</th>
+    <th>Дедлайн</th>
+    <th>Статус</th>
+    <th>Действия</th>
+</tr>
     {% for o in orders %}
     <tr>
         <td>{{ o.product_name }}</td>
-        <td>{% if o.color == 'белый' %}⚪{% else %}⚫{% endif %} {{ o.color }}</td>
-        <td>{{ o.quantity }} шт</td>
-        <td>{{ o.filament_grams }} г</td>
+<td>{{ o.filament_name }}</td>
+<td>{{ o.color }}</td>
+<td>{{ o.quantity }} шт</td>
+<td>{{ o.filament_grams }} г</td>
         <td>{{ o.deadline or '—' }}</td>
         <td>
             {% if o.status == 'в очереди' %}🟠 {{ o.status }}

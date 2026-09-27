@@ -33,6 +33,7 @@ class Material(db.Model):
 class Order(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     product_name = db.Column(db.String(100), nullable=False)   # что печатать
+    filament_name = db.Column(db.String(100), nullable=False, default='PLA')  # ← новая строк
     color = db.Column(db.String(20), default='белый')          # цвет
     quantity = db.Column(db.Integer, nullable=False, default=1) # сколько штук
     filament_grams = db.Column(db.Integer, nullable=False, default=0)  # всего грамм филамента
@@ -170,8 +171,12 @@ def production():
     orders = Order.query.all()
     priority = {'печатается': 0, 'в очереди': 1, 'готово': 2}
     orders.sort(key=lambda o: (priority.get(o.status, 9), o.created))
-    return render_template('production.html', orders=orders)
 
+    # Собираем все названия филамента со склада — для автодополнения
+    filament_names = [m.name for m in Material.query.filter_by(category='филамент').all()]
+    filament_names = sorted(set(filament_names))
+
+    return render_template('production.html', orders=orders, filament_names=filament_names)
 
 @app.route('/production/add', methods=['GET', 'POST'])
 def production_add():
@@ -179,7 +184,8 @@ def production_add():
     if request.method == 'POST':
         order = Order(
             product_name=request.form['product_name'],
-            color=request.form.get('color', 'белый'),
+            filament_name=request.form['filament_name'],
+            color=request.form['color'],
             quantity=int(request.form.get('quantity', 1) or 1),
             filament_grams=int(request.form.get('filament_grams', 0) or 0),
             deadline=request.form['deadline']
@@ -187,7 +193,9 @@ def production_add():
         db.session.add(order)
         db.session.commit()
         return redirect(url_for('production'))
-    return render_template('production_add.html')
+
+    filament_names = sorted(set(m.name for m in Material.query.filter_by(category='филамент').all()))
+    return render_template('production_add.html', filament_names=filament_names)
 
 
 @app.route('/production/edit/<int:id>', methods=['GET', 'POST'])
@@ -196,14 +204,15 @@ def production_edit(id):
     order = Order.query.get_or_404(id)
     if request.method == 'POST':
         order.product_name = request.form['product_name']
+        order.filament_name = request.form['filament_name']
         order.color = request.form.get('color', 'белый')
         order.quantity = int(request.form.get('quantity', 1) or 1)
         order.filament_grams = int(request.form.get('filament_grams', 0) or 0)
         order.deadline = request.form['deadline']
         db.session.commit()
         return redirect(url_for('production'))
-    return render_template('production_edit.html', order=order)
-
+    filament_names = sorted(set(m.name for m in Material.query.filter_by(category='филамент').all()))
+    return render_template('production_edit.html', order=order, filament_names=filament_names)
 
 @app.route('/production/status/<int:id>/<status>')
 def production_status(id, status):

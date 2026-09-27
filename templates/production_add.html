@@ -7,11 +7,16 @@
     <input type="text" name="product_name" required autofocus
            placeholder="Например: Ваза-спираль">
 
-    <label>Цвет:</label>
-    <select name="color">
-        <option value="белый">⚪ Белый</option>
-        <option value="чёрный">⚫ Чёрный</option>
-    </select>
+    <label>Филамент (тип пластика):</label>
+<input type="text" name="filament_name" list="filament_names" required
+       placeholder="PLA, PETG, ABS...">
+<datalist id="filament_names">
+    {% for f in filament_names %}<option value="{{ f }}">{% endfor %}
+</datalist>
+
+<label>Цвет:</label>
+<input type="text" name="color" value="белый" required
+       placeholder="Например: белый, жёлтый, красный">
 
     <label>Количество, шт:</label>
     <input type="number" name="quantity" value="1" min="1" required>

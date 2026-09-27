@@ -20,16 +20,11 @@
     <tr>
         <td>{{ m.name }}</td>
         <td>
-            {% if m.category == 'филамент' %}филамент
-            {% else %}продукция
+            {% if m.category == 'филамент' %}🧵 филамент
+            {% else %}📦 продукция
             {% endif %}
         </td>
-        <td>
-            {% if m.color == 'белый' %}⚪ белый
-            {% elif m.color == 'чёрный' %}⚫ чёрный
-            {% else %}{{ m.color }}
-            {% endif %}
-        </td>
+        <td>{{ m.color }}</td>
         <td>
             {% if m.category == 'филамент' %}
                 <b>{{ m.quantity }} г</b>
